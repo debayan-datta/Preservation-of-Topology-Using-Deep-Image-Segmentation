@@ -1,0 +1,79 @@
+TDFMain.py
+Funtions:
+
+1)compute_persistence_2DImg_1DHom(f) --> dgm, birth_cp_list, death_cp_list
+	The function compute_persistence_2DImg_1DHom processes a 2D function to compute its persistence diagram and critical points for 1D homology. 
+It does so by padding the input, leveraging a C++ library for the persistence computation, filtering the results for 1D features, and then 
+mapping the critical points back to the original coordinates. This analysis helps in understanding the topological features (like loops) present in the 2D data.
+
+
+
+2)compute_dgm_force(lh_dgm, gt_dgm) --> force_list, idx_holes_to_fix, idx_holes_to_remove
+	The function compute_dgm_force calculates a "force list" that indicates how to adjust the persistence diagram lh_dgm (learned homology diagram) to match the
+	 (ground truth persistence diagram) gt_dgm. Here's a detailed breakdown of what each part of the function does:
+Inputs:----
+	lh_dgm: Learned homology persistence diagram, an array of shape (n, 2).
+	gt_dgm: Ground truth persistence diagram, an array of shape (m, 2).
+Outputs:---
+	force_list: A list of "forces" that indicates how to adjust each point in lh_dgm.
+	idx_holes_to_fix: Indices of the holes in lh_dgm that need to be adjusted to match ground truth holes.
+	idx_holes_to_remove: Indices of the holes in lh_dgm that need to be removed because they are not present in the ground truth.
+Summary
+	force_list: Indicates adjustments to make lh_dgm match gt_dgm.
+	idx_holes_to_fix: Indices of holes in lh_dgm to be adjusted.
+	idx_holes_to_remove: Indices of holes in lh_dgm to be removed.
+	This function ensures that the learned persistence diagram aligns more closely with the ground truth by fixing or removing specific features.
+
+
+
+3)compute_topological_loss(lh_dgm, gt_dgm) --> loss
+The function compute_topological_loss calculates the persistence loss between the learned homology persistence diagram and the ground truth by summing the squared displacements (forces) needed to fix and remove holes. The function steps are:
+Calculate Forces: Uses compute_dgm_force to determine the necessary adjustments to make the learned diagram match the ground truth.
+Initialize Loss: Starts with a zero loss value.
+Accumulate Loss for Fixing Holes: Adds the squared adjustments for holes that need to be fixed.
+Accumulate Loss for Removing Holes: Adds the squared adjustments for holes that need to be removed.
+Return Loss: Returns the total computed loss.
+This loss function effectively measures the discrepancy between the learned and ground truth diagrams in terms of how much adjustment is needed to align them, with larger adjustments resulting in a higher loss.
+
+
+
+4)compute_topological_grad(lh_dgm, lh_bcp, lh_dcp, gt_dgm) --> topograd
+The function compute_topological_grad calculates the topological gradient, which indicates how the birth and death critical points in the learned homology persistence diagram (lh_dgm) should be adjusted to minimize the topological loss compared to the ground truth persistence diagram (gt_dgm):
+Function Explanation
+Inputs
+lh_dgm: Learned homology persistence diagram, an array of shape (n, 2).
+lh_bcp: Birth critical points corresponding to lh_dgm, an array of shape (n, 2).
+lh_dcp: Death critical points corresponding to lh_dgm, an array of shape (n, 2).
+gt_dgm: Ground truth persistence diagram, an array of shape (m, 2).
+Outputs
+topo_grad: Topological gradient, an array of shape (2*(k + l), 3) where k is the number of holes to fix and l is the number of holes to remove.
+The compute_topological_grad function calculates the gradient for adjusting the learned persistence diagram to match the ground truth diagram by:
+Calculating Forces: Uses compute_dgm_force to determine the necessary forces for adjusting the persistence points.
+Initializing Gradient Array: Creates an array to store the birth and death critical points along with their forces.
+Populating the Array: Records the birth and death critical points along with the corresponding forces for holes to fix and remove.
+Adjusting Forces: Multiplies the forces by -2 to compute the gradients.
+Returning the Gradient: Outputs the array that indicates how to adjust the critical points to minimize the topological loss.
+
+
+
+5)save_pers_dgms(fig_fname, lh_dgm, lh_dname, gt_dgm, gt_dname) --> saves the persistence diagram to visualize
+This function helps in visually assessing how well the learned persistence diagram matches the ground truth and the necessary adjustments.
+
+
+
+6)draw_critical_pts(fig_fname, lh_img, lh_dgm, lh_bcp, lh_dcp, gt_dgm) --> draw critical points that needs to be pushed up/down
+The draw_critical_pts function provides a visual representation of the critical points in the learned image that need to be adjusted to better match the ground truth persistence diagram.
+This function helps in identifying and visualizing which critical points in the learned image need adjustments, facilitating better understanding and debugging of the topological differences between the learned and ground truth persistence diagrams.
+
+
+
+7)main function:
+0. makes a result folder
+1. loads data in likelihood (lh) (as a np.array)
+2. ground truth (gt) is also an array with (T/F values) gt[i,j]=True if lh[i,j]>0.9
+3. compute persistence of lh and gt
+4. draw pers diagrams and critical points for both; store in results file
+5. compute loss (scalar)
+6. Compute the gradient of loss (forces at x,y locations in the image which corresponding to crit pts from the persistence computation)
+
+

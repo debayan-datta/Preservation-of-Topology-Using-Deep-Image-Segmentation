@@ -1,0 +1,164 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torch.utils.data import DataLoader, TensorDataset
+import numpy as np
+
+# Define the neural network
+class TopologyPreservingCNN(nn.Module):
+    def __init__(self):
+        super(TopologyPreservingCNN, self).__init__()
+        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
+        self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
+        self.pool2 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(128, 256, kernel_size=3, padding=1)
+        self.pool4 = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.fc1 = nn.Linear(256 * 8 * 8, 1024)  # Assuming input patches of size 65x65
+        self.fc2 = nn.Linear(1024, 2)  # Assuming binary classification for segmentation
+
+    def forward(self, x):
+        x = self.pool1(F.relu(self.conv1(x)))
+        x = self.pool2(F.relu(self.conv2(x)))
+        x = F.relu(self.conv3(x))
+        x = self.pool4(F.relu(self.conv4(x)))
+        x = x.view(-1, 256 * 8 * 8)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+# Function to sample patches
+def random_patch_sampling(image, patch_size=65, num_patches=100):
+    patches = []
+    img_height, img_width = image.shape
+    for _ in range(num_patches):
+        top_left_y = np.random.randint(0, img_height - patch_size)
+        top_left_x = np.random.randint(0, img_width - patch_size)
+        patch = image[top_left_y:top_left_y + patch_size, top_left_x:top_left_x + patch_size]
+        patches.append(patch)
+    return patches
+
+# Functions to compute persistence diagrams and gradients
+def compute_persistence_2DImg_1DHom(f):
+    assert len(f.shape) == 2
+    dim = 2
+    padwidth = 2
+    padvalue = min(f.min(), 0.0)
+    f_padded = np.pad(f, padwidth, 'constant', constant_values=padvalue)
+    from PersistencePython import cubePers
+    persistence_result = cubePers(np.reshape(f_padded, f_padded.size).tolist(), list(f_padded.shape), 0.001)
+    persistence_result_filtered = [k for k in persistence_result if k[0] == 1]
+    persistence_result_filtered = np.array(persistence_result_filtered)
+    dgm = persistence_result_filtered[:, 1:3]
+    birth_cp_list = persistence_result_filtered[:, 4:4 + dim]
+    death_cp_list = persistence_result_filtered[:, 4 + dim:]
+    birth_cp_list = birth_cp_list - padwidth
+    death_cp_list = death_cp_list - padwidth
+    return dgm, birth_cp_list, death_cp_list
+
+def compute_dgm_force(lh_dgm, gt_dgm):
+    lh_pers = lh_dgm[:, 1] - lh_dgm[:, 0]
+    gt_pers = gt_dgm[:, 1] - gt_dgm[:, 0]
+    assert lh_pers.size > gt_pers.size
+    tmp = gt_pers > 0.999
+    assert tmp.sum() == gt_pers.size
+    gt_n_holes = gt_pers.size
+    tmp = lh_pers > 0.999
+    if sum(tmp) >= 1:
+        lh_n_holes_perfect = tmp.sum()
+        idx_holes_perfect = np.argpartition(lh_pers, -lh_n_holes_perfect)[-lh_n_holes_perfect:]
+    else:
+        idx_holes_perfect = np.where(lh_pers == lh_pers.max())[0]
+    idx_holes_to_fix_or_perfect = np.argpartition(lh_pers, -gt_n_holes)[-gt_n_holes:]
+    idx_holes_to_fix = list(set(idx_holes_to_fix_or_perfect) - set(idx_holes_perfect))
+    idx_holes_to_remove = list(set(range(lh_pers.size)) - set(idx_holes_to_fix_or_perfect))
+    pers_thd = 0.03
+    idx_valid = np.where(lh_pers > pers_thd)[0]
+    idx_holes_to_remove = list(set(idx_holes_to_remove).intersection(set(idx_valid)))
+    force_list = np.zeros(lh_dgm.shape)
+    force_list[idx_holes_to_fix, 0] = 0 - lh_dgm[idx_holes_to_fix, 0]
+    force_list[idx_holes_to_fix, 1] = 1 - lh_dgm[idx_holes_to_fix, 1]
+    force_list[idx_holes_to_remove, 0] = lh_pers[idx_holes_to_remove] / math.sqrt(2.0)
+    force_list[idx_holes_to_remove, 1] = -lh_pers[idx_holes_to_remove] / math.sqrt(2.0)
+    return force_list, idx_holes_to_fix, idx_holes_to_remove
+
+def compute_topological_loss(lh_dgm, gt_dgm):
+    force_list, idx_holes_to_fix, idx_holes_to_remove = compute_dgm_force(lh_dgm, gt_dgm)
+    loss = 0.0
+    for idx in idx_holes_to_fix:
+        loss += force_list[idx, 0] ** 2 + force_list[idx, 1] ** 2
+    for idx in idx_holes_to_remove:
+        loss += force_list[idx, 0] ** 2 + force_list[idx, 1] ** 2
+    return loss
+
+def compute_topological_grad(lh_dgm, lh_bcp, lh_dcp, gt_dgm):
+    force_list, idx_holes_to_fix, idx_holes_to_remove = compute_dgm_force(lh_dgm, gt_dgm)
+    topo_grad = np.zeros([2 * (len(idx_holes_to_fix) + len(idx_holes_to_remove)), 3])
+    counter = 0
+    for idx in idx_holes_to_fix:
+        topo_grad[counter] = [lh_bcp[idx, 1], lh_bcp[idx, 0], force_list[idx, 0]]
+        counter += 1
+        topo_grad[counter] = [lh_dcp[idx, 1], lh_dcp[idx, 0], force_list[idx, 1]]
+        counter += 1
+    for idx in idx_holes_to_remove:
+        topo_grad[counter] = [lh_bcp[idx, 1], lh_bcp[idx, 0], force_list[idx, 0]]
+        counter += 1
+        topo_grad[counter] = [lh_dcp[idx, 1], lh_dcp[idx, 0], force_list[idx, 1]]
+        counter += 1
+    topo_grad[:, 2] = topo_grad[:, 2] * -2
+    return topo_grad
+
+# Instantiate the model
+model = TopologyPreservingCNN()
+print(model)
+
+# Optimizer and loss function
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+criterion = nn.CrossEntropyLoss()
+
+# Dummy dataset and dataloader for illustration
+dataset = TensorDataset(torch.randn(100, 1, 65, 65), torch.randint(0, 2, (100,)))
+dataloader = DataLoader(dataset, batch_size=16, shuffle=True)
+
+# Training loop
+num_epochs = 10
+for epoch in range(num_epochs):
+    model.train()
+    running_loss = 0.0
+    for i, (inputs, labels) in enumerate(dataloader):
+        optimizer.zero_grad()
+
+        # Forward pass
+        outputs = model(inputs)
+        ce_loss = criterion(outputs, labels)
+
+        # Topological loss calculation
+        inputs_np = inputs.detach().cpu().numpy()
+        labels_np = labels.detach().cpu().numpy()
+        topo_loss = 0.0
+        topo_grad = 0.0
+        for j in range(inputs_np.shape[0]):
+            lh, bcp_lh, dcp_lh = compute_persistence_2DImg_1DHom(inputs_np[j, 0])
+            gt, bcp_gt, dcp_gt = compute_persistence_2DImg_1DHom(labels_np[j])
+            topo_loss += compute_topological_loss(lh, gt)
+            topo_grad += compute_topological_grad(lh, bcp_lh, dcp_lh, gt)
+        topo_loss /= inputs_np.shape[0]
+        topo_grad /= inputs_np.shape[0]
+
+        # Combined loss
+        loss = ce_loss + topo_loss
+        loss.backward()
+
+        # Apply topological gradients
+        inputs.grad = torch.tensor(topo_grad, dtype=torch.float32)
+
+        optimizer.step()
+
+        running_loss += loss.item()
+        if i % 10 == 9:
+            print(f"[Epoch {epoch + 1}, Batch {i + 1}] loss: {running_loss / 10:.4f}")
+            running_loss = 0.0
+
+print("Finished Training")

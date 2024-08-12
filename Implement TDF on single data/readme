@@ -1,1 +1,7 @@
+A RGB image is converted to B/W image (3 channels to 1 channel)
+We find the cropped likelihood(lh) and groundtruth(gt) of this converted image.
 
+The Persistence Diagram is shown where the points are either fixed (mapped to (0,1)) or removed (mapped to diagonal)
+The criritcal points for lh ang gt are saved inside TDFMain
+
+On the actual image, these removed/fixed areas are shown

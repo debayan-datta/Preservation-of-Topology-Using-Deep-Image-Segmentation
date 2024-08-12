@@ -8,7 +8,7 @@ The 4 ways are:
 4. Enhanced CNN model without Topological Loss
 You can find the code here https://colab.research.google.com/drive/1rlalyeIvIev01O6BzPehoJ6zdYbd3gX9?usp=sharing
 
-The Topological Loss is incorporated in the Neural Network. You can find the a text file which has the code for this purpose. This is just given to show which part was necessary for this work, it is already in above codes for the different models
+The Topological Loss is incorporated in the Neural Network. You can find the a text file named "NNtopo_incorporated" which has the code for this purpose. This is just given to show which part was necessary for this work, it is already in above codes for the different models
 
 INCORPORATION: The neural netowrk using to the loss and gradient function where the likelihood and ground truth they will be divided with a patch size of 65x65
 1. We use small patches (65 × 65) instead of big patches/whole image.

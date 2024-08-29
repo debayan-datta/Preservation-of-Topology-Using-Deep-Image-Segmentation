@@ -7,9 +7,10 @@ Code/TDFPython/TDFMain.py: main file for Persistence Homology
 Actual link of the code of the final models are given in the readme file in ultimate folder
 
 # Acknowledgement
-This work was under the Summer Research Fellowship Program offered by Indian Academy of Sciences
-Project Superviso: Dr Amit Chattopadhyay, Assistant Professor, International Institute of Information Technology, Bengaluru
-HuXiaoling worked on https://github.com/HuXiaoling/TopoLoss. You can see their repository. You will be needed recompile Persistence.so file in order to run TDFMain.py wrapped as a static library.
+This work was under the Summer Research Fellowship Program offered by Indian Academy of Sciences.<br>
+Project Supervisor: Dr Amit Chattopadhyay, Assistant Professor, International Institute of Information Technology, Bengaluru,<br>
+HuXiaoling worked on to find the continuous loss function that can be incorpotated in the network. You can find it [here](https://github.com/HuXiaoling/TopoLoss). 
+Inroder to find the topological loss you will be needed recompile Persistence.so file in order to run TDFMain.py wrapped as a static library.
 
 # Methodology 
 N implementation file contains only 1 sort of implementation of the Persistence Homology concept with Neural Networks.
@@ -36,3 +37,7 @@ The neural netowrk using to the loss and gradient function where the likelihood 
 6. Our topological loss compliments cross-entropy loss by combating sampling bias.
 7. However, for a small amount of difficult locations (blurred regions), it is much harder to learn to predict correctly. The issue is these locations only take a small portion of training pixel samples. Such disproportion cannot be changed even with more annotated training images. Topological loss essentially identifies these difficult locations during training (as critical pixels). It then forces the network to learn patterns near these locations, at the expense of overfitting and consequently slightly compromised per-pixel accuracy.
 8. On the other hand, we stress that topological loss cannot succeed alone. Without cross-entropy loss, inferring topology from a completely random likelihood map is meaningless. Cross-entropy loss finds a reasonable likelihood map so that the topological loss can improve its topology.
+
+
+# Referneces
+[Topology Preserving Deep Image Segmentation: Xiaoling Hu, Li Fuxin, Dimitris Samaras and Chao Chen](https://proceedings.neurips.cc/paper_files/paper/2019/file/2d95666e2649fcfc6e3af75e09f5adb9-Paper.pdf)

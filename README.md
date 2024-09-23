@@ -7,7 +7,8 @@ Actual link of the code of the final models are given in the readme file in ulti
 
 # Acknowledgement
 This work was under the Summer Research Fellowship Program offered by Indian Academy of Sciences.<br>
-Project Supervisor: Dr Amit Chattopadhyay, Assistant Professor, International Institute of Information Technology, Bengaluru,<br>
+Project Supervisor: Dr Amit Chattopadhyay, Assistant Professor, International Institute of Information Technology, Bengaluru.
+
 HuXiaoling worked on to find the continuous loss function that can be incorpotated in the network. You can find it [here](https://github.com/HuXiaoling/TopoLoss). 
 Inroder to find the topological loss you will be needed recompile Persistence.so file in order to run TDFMain.py wrapped as a static library.
 
@@ -21,6 +22,7 @@ The 4 ways are:
 2. Fine-tuned VGG-19 model with Topological Loss
 3. Enhanced CNN model with Topological Loss
 4. Enhanced CNN model without Topological Loss
+
 You can find the code [here](https://colab.research.google.com/drive/1rlalyeIvIev01O6BzPehoJ6zdYbd3gX9?usp=sharing)
 
 ## Topological Loss

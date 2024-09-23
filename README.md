@@ -1,6 +1,5 @@
-# Topology-Preservation-Using-Deep-Image-Segmentation
-
-Introducing a continuous-valued loss function. This function is designed to enforce segmentations to maintain correct topology akin to the ground truth, ensuring consistent Betti numbers. The innovative topology-preserving loss function is differentiable, allowing seamless integration into end-to-end training of deep neural networks.
+# Preservation-of-Topology-using-Deep-Image-Segmentation
+IWorking on a continuous-valued loss function which is designed to enforce segmentations to maintain correct topology akin to the ground truth, ensuring consistent Betti numbers. The innovative topology-preserving loss function is differentiable, allowing seamless integration into end-to-end training of deep neural networks.
 
 # Directory
 Code/TDFPython/TDFMain.py: main file for Persistence Homology

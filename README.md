@@ -23,7 +23,7 @@ The 4 ways are:
 3. Enhanced CNN model with Topological Loss
 4. Enhanced CNN model without Topological Loss
 
-You can find the code [here](https://colab.research.google.com/drive/1rlalyeIvIev01O6BzPehoJ6zdYbd3gX9?usp=sharing)
+  You can find the code [here](https://colab.research.google.com/drive/1rlalyeIvIev01O6BzPehoJ6zdYbd3gX9?usp=sharing)
 
 ## Topological Loss
 The Topological Loss is incorporated in the Neural Network. You can find the a text file named "NNtopo_incorporated" which has the code for this purpose. This is just given to show which part was necessary for this work, it is already in above codes for the different models

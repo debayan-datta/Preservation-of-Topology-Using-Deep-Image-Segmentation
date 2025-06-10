@@ -6,9 +6,9 @@ The 4 ways are:
 2. Fine-tuned VGG-19 model with Topological Loss
 3. Enhanced CNN model with Topological Loss
 4. Enhanced CNN model without Topological Loss
-You can find the code here: `find_persistent_homology_by_cnn.py`
+You can find the code here: [`find_persistent_homology_by_cnn.py`](./find_persistent_homology_by_cnn.py)
 
-The Topological Loss is incorporated in the Neural Network. You can find the a text file named "NNtopo_incorporated" which has the code for this purpose. This is just given to show which part was necessary for this work, it is already in above codes for the different models
+- [`NNtopo_incorporated.txt`](./NNtopo_incorporated.txt): Highlights the integration of topological loss. This is just given to show which part was necessary for this work, it is already in above codes for the different models.
 
 INCORPORATION: The neural netowrk using to the loss and gradient function where the likelihood and ground truth they will be divided with a patch size of 65x65
 1. We use small patches (65 × 65) instead of big patches/whole image.

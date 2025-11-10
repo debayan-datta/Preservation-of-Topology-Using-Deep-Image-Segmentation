@@ -40,5 +40,5 @@ The neural netowrk using to the loss and gradient function where the likelihood 
 8. On the other hand, we stress that topological loss cannot succeed alone. Without cross-entropy loss, inferring topology from a completely random likelihood map is meaningless. Cross-entropy loss finds a reasonable likelihood map so that the topological loss can improve its topology.
 
 
-# Referneces
+# References
 [Topology Preserving Deep Image Segmentation: Xiaoling Hu, Li Fuxin, Dimitris Samaras and Chao Chen](https://proceedings.neurips.cc/paper_files/paper/2019/file/2d95666e2649fcfc6e3af75e09f5adb9-Paper.pdf)
